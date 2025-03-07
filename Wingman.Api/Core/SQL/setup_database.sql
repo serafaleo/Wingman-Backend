@@ -1,13 +1,9 @@
-CREATE DATABASE Wingman;
-GO
+CREATE DATABASE "Wingman";
 
-USE Wingman;
-GO
-
-CREATE TABLE Users(
-	Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-	Email NVARCHAR(100) UNIQUE NOT NULL,
-	PasswordHash CHAR(84) NOT NULL,
-	RefreshToken CHAR(44) NULL,
-	RefreshTokenExpirationDateTimeUTC DATETIME2  NULL
+CREATE TABLE "Users" (
+    "Id" UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    "Email" VARCHAR(100) UNIQUE NOT NULL,
+    "PasswordHash" CHAR(84) NOT NULL,
+    "RefreshToken" CHAR(44),
+    "RefreshTokenExpirationDateTimeUTC" TIMESTAMPTZ
 );

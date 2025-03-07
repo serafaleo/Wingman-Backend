@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Npgsql;
 using System.Data;
 using Wingman.Api.Core.Services.Interfaces;
 
@@ -12,8 +12,8 @@ public class DbConnectionService : IDbConnectionService
     public DbConnectionService(IConfiguration configuration)
     {
         _configuration = configuration;
-        _connectionString = _configuration.GetConnectionString("SQLServerConnection")!;
+        _connectionString = _configuration.GetConnectionString("PostgreSQLConnection")!;
     }
 
-    public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
+    public IDbConnection CreateConnection() => new NpgsqlConnection(_connectionString);
 }

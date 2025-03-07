@@ -13,8 +13,8 @@ public class UsersRepository(IDbConnectionService db) : BaseRepository<User>(db)
     {
         var queryParams = new { Email = email };
 
-        string emailColumnName = nameof(User.Email);
-        string emailParamName = $"@{nameof(queryParams.Email)}";
+        string emailColumnName = BuildColumnName(nameof(User.Email));
+        string emailParamName = BuildParameterName(nameof(queryParams.Email));
 
         string query = $"SELECT * FROM {_tableName} WHERE {emailColumnName} = {emailParamName}";
 
@@ -24,12 +24,12 @@ public class UsersRepository(IDbConnectionService db) : BaseRepository<User>(db)
 
     public async Task UpdateRefreshTokenAsync(User user)
     {
-        string refreshTokenColumnName = nameof(User.RefreshToken);
-        string refreshTokenParamName = $"@{refreshTokenColumnName}";
-        string refreshTokenExpirationDateColumnName = nameof(User.RefreshTokenExpirationDateTimeUTC);
-        string refreshTokenExpirationDateParamName = $"@{refreshTokenExpirationDateColumnName}";
-        string userIdColumnName = nameof(User.Id);
-        string userIdParamName = $"@{userIdColumnName}";
+        string refreshTokenColumnName = BuildColumnName(nameof(User.RefreshToken));
+        string refreshTokenParamName = BuildParameterName(nameof(User.RefreshToken));
+        string refreshTokenExpirationDateColumnName = BuildColumnName(nameof(User.RefreshTokenExpirationDateTimeUTC));
+        string refreshTokenExpirationDateParamName = BuildParameterName(nameof(User.RefreshTokenExpirationDateTimeUTC));
+        string userIdColumnName = BuildColumnName(nameof(User.Id));
+        string userIdParamName = BuildParameterName(nameof(User.Id));
 
         string query =
 $@"UPDATE {_tableName}
