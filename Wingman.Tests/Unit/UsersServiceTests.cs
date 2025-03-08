@@ -333,4 +333,24 @@ public class UsersServiceTests
     }
 
     #endregion
+
+    #region Logout
+    [Fact]
+    public async Task Logout_ShouldReturnOk_WhenSuccessful()
+    {
+        // Arrange
+        Guid userId = Guid.NewGuid();
+        string email = "test@test.com";
+
+        // Act
+        ApiResponseDto<object> result = await _service.Logout(userId, email);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        Assert.True(result.Success);
+        Assert.Equal("Logout successful.", result.Message);
+        Assert.Null(result.Data);
+        Assert.Null(result.Errors);
+    }
+    #endregion
 }
