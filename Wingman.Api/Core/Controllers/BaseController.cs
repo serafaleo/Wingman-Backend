@@ -5,7 +5,7 @@ using Wingman.Api.Core.Services.Interfaces;
 namespace Wingman.Api.Core.Controllers;
 
 [Route("api/[controller]/[action]")]
-public class BaseController<T>(IBaseService<T> service) : Controller
+public abstract class BaseController<T>(IBaseService<T> service) : Controller
 {
     private readonly IBaseService<T> _service = service;
 

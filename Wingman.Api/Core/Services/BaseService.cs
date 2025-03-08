@@ -4,7 +4,7 @@ using Wingman.Api.Core.Services.Interfaces;
 
 namespace Wingman.Api.Core.Services;
 
-public class BaseService<T> : IBaseService<T>
+public abstract class BaseService<T> : IBaseService<T>
 {
     private readonly IBaseRepository<T> _repo;
     private readonly string _modelName;

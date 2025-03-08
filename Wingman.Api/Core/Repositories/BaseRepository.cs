@@ -6,7 +6,7 @@ using Wingman.Api.Core.Services.Interfaces;
 
 namespace Wingman.Api.Core.Repositories;
 
-public class BaseRepository<T> : IBaseRepository<T>
+public abstract class BaseRepository<T> : IBaseRepository<T>
 {
     protected readonly IDbConnectionService _db;
     protected readonly string _tableName;
