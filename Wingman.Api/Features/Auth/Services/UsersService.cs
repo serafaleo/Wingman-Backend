@@ -57,7 +57,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
     public async Task<ApiResponseDto<TokenResponseDto>> Login(LoginRequestDto loginDto)
     {
-        // NOTE(serafa.leo): Here we avoid information disclosure by returning Unauthorizedif anything
+        // NOTE(serafa.leo): Here we avoid information disclosure by returning Unauthorized if anything
         // wrong occurs, and by providing a generic message like "Email or password is wrong".
 
         ApiResponseDto<TokenResponseDto> commonFailedResponse = new()
