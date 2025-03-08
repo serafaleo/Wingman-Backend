@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Npgsql;
 using Wingman.Api.Core.DTOs;
 using Wingman.Api.Core.Helpers.ExtensionMethods;
 using Wingman.Api.Core.Services;
@@ -39,11 +40,9 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
                 Message = "User successfully created."
             };
         }
-        catch (Exception ex)
+        catch (PostgresException ex)
         {
-            string exMessage = ex.GetInnermostMessage();
-
-            if (exMessage.Contains(newUser.Email)) // TODO(serafa.leo): Make sure that SQL Server will ALWAYS tell us which email already exists.
+            if (ex.SqlState == PostgresErrorCodes.UniqueViolation)
             {
                 return new()
                 {

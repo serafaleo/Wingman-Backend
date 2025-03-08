@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Wingman.Api.Features.Auth.Helpers.Constants;
+using Wingman.Api.Features.Auth.Helpers.Validators;
 
 namespace Wingman.Api.Features.Auth.DTOs;
 
@@ -14,17 +14,7 @@ public class LoginRequestDtoValidator : AbstractValidator<LoginRequestDto>
 {
     public LoginRequestDtoValidator()
     {
-        RuleFor(loginDto => loginDto.Email)
-            .NotEmpty()
-            .EmailAddress()
-            .MaximumLength(LengthConstants.EMAIL_MAX_LENGTH);
-
-        RuleFor(loginDto => loginDto.Password)
-            .NotEmpty()
-            .MinimumLength(LengthConstants.PASSWORD_MIN_LENGTH)
-            .Matches(@"[A-Z]+")
-            .Matches(@"[a-z]+")
-            .Matches(@"[0-9]+")
-            .Matches(@"[^a-zA-Z0-9]");
+        RuleFor(loginDto => loginDto.Email).EmailRules();
+        RuleFor(loginDto => loginDto.Password).PasswordRules();
     }
 }
