@@ -4,9 +4,9 @@ namespace Wingman.Api.Core.Services.Interfaces;
 
 public interface IBaseService<T>
 {
-    public Task<ApiResponseDto<List<T>>> GetAllAsync(Guid userId, int page, int pageSize);
-    public Task<ApiResponseDto<T>> GetByIdAsync(Guid id);
-    public Task<ApiResponseDto<Guid>> CreateAsync(T model, Guid userId);
-    public Task<ApiResponseDto<object>> UpdateAsync(T model, Guid userId);
-    public Task<ApiResponseDto<object>> DeleteByIdAsync(Guid id);
+    public Task<ApiResponseDto<List<T>>> GetAllAsync(int page, int pageSize, Guid contextUserId);
+    public Task<ApiResponseDto<T>> GetByIdAsync(Guid id, Guid contextUserId);
+    public Task<ApiResponseDto<Guid>> CreateAsync(T model, Guid contextUserId);
+    public Task<ApiResponseDto<object>> UpdateAsync(Guid id, T model, Guid contextUserId);
+    public Task<ApiResponseDto<object>> DeleteByIdAsync(Guid id, Guid contextUserId);
 }

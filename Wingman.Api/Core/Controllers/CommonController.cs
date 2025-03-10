@@ -11,13 +11,13 @@ public abstract class CommonController<T>(IBaseService<T> service) : BaseControl
     [HttpGet]
     public async Task<IActionResult> GetAllAsync([FromQuery] int page, [FromQuery] int pageSize)
     {
-        return CreateResponse(await _service.GetAllAsync(HttpContext.GetUserId(), page, pageSize));
+        return CreateResponse(await _service.GetAllAsync(page, pageSize, HttpContext.GetUserId()));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetByIdAsync([FromRoute] Guid id)
     {
-        return CreateResponse(await _service.GetByIdAsync(id));
+        return CreateResponse(await _service.GetByIdAsync(id, HttpContext.GetUserId()));
     }
 
     [HttpPost]
@@ -26,15 +26,15 @@ public abstract class CommonController<T>(IBaseService<T> service) : BaseControl
         return CreateResponse(await _service.CreateAsync(model, HttpContext.GetUserId()));
     }
 
-    [HttpPut]
-    public async Task<IActionResult> UpdateAsync([FromBody] T model)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAsync([FromRoute] Guid id, [FromBody] T model)
     {
-        return CreateResponse(await _service.UpdateAsync(model, HttpContext.GetUserId()));
+        return CreateResponse(await _service.UpdateAsync(id, model, HttpContext.GetUserId()));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteByIdAsync([FromRoute] Guid id)
     {
-        return CreateResponse(await _service.DeleteByIdAsync(id));
+        return CreateResponse(await _service.DeleteByIdAsync(id, HttpContext.GetUserId()));
     }
 }

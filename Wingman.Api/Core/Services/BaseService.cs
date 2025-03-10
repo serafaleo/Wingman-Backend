@@ -9,31 +9,41 @@ public abstract class BaseService<T> : IBaseService<T>
 {
     private readonly IBaseRepository<T> _repo;
     private readonly string _modelName;
+    private readonly string _defaultNotFoundMessage;
+    private const string _userIdFieldName = "UserId";
 
     public BaseService(IBaseRepository<T> repo)
     {
         _repo = repo;
         _modelName = $"{typeof(T).Name}";
+        _defaultNotFoundMessage = $"{_modelName} not found in the server.";
     }
 
-    public async Task<ApiResponseDto<List<T>>> GetAllAsync(Guid userId, int page, int pageSize)
+    public async Task<ApiResponseDto<List<T>>> GetAllAsync(int page, int pageSize, Guid contextUserId)
     {
-        List<T> entities = await _repo.GetAllAsync(userId, page, pageSize);
+        List<T> entities = await _repo.GetAllAsync(contextUserId, page, pageSize);
 
         return new()
         {
             StatusCode = StatusCodes.Status200OK,
-            Data = entities,
-            Message = $"Retrieved {entities.Count} {_modelName}s."
+            Data = entities
         };
     }
 
-    public async Task<ApiResponseDto<T>> GetByIdAsync(Guid id)
+    public async Task<ApiResponseDto<T>> GetByIdAsync(Guid id, Guid contextUserId)
     {
         T? model = await _repo.GetByIdAsync(id);
 
         if (model is not null)
         {
+            if (!UserHasPermission(model, contextUserId))
+            {
+                return new()
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
+            }
+
             return new()
             {
                 StatusCode = StatusCodes.Status200OK,
@@ -44,18 +54,13 @@ public abstract class BaseService<T> : IBaseService<T>
         return new()
         {
             StatusCode = StatusCodes.Status404NotFound,
-            Message = $"No {_modelName} with Id {id} was found."
+            Message = _defaultNotFoundMessage
         };
     }
 
-    public async Task<ApiResponseDto<Guid>> CreateAsync(T model, Guid userId)
+    public async Task<ApiResponseDto<Guid>> CreateAsync(T model, Guid contextUserId)
     {
-        FieldInfo? userIdField = typeof(T).GetField("UserId");
-
-        if (userIdField is not null)
-        {
-            userIdField.SetValue(model, userId);
-        }
+        SetUserIdValueToModel(model, contextUserId);
 
         Guid id = await _repo.CreateAsync(model);
 
@@ -63,61 +68,98 @@ public abstract class BaseService<T> : IBaseService<T>
         {
             StatusCode = StatusCodes.Status201Created,
             Data = id,
-            Message = $"{_modelName} successfully created."
         };
     }
 
-    public async Task<ApiResponseDto<object>> UpdateAsync(T model, Guid userId)
+    public async Task<ApiResponseDto<object>> UpdateAsync(Guid id, T model, Guid contextUserId)
     {
-        FieldInfo? userIdField = typeof(T).GetField("UserId");
+        T? modelInDataBase = await _repo.GetByIdAsync(id);
 
-        if (userIdField is not null)
+        if (modelInDataBase is not null)
         {
-            if ((Guid)userIdField.GetValue(model)! != userId)
+            if (!UserHasPermission(modelInDataBase, contextUserId))
             {
                 return new()
                 {
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Message = $"The {_modelName} requested for update does not belong to the logged user."
+                    StatusCode = StatusCodes.Status403Forbidden
                 };
             }
-        }
 
-        bool result = await _repo.UpdateAsync(model);
+            await _repo.UpdateAsync(model);
 
-        if (!result)
-        {
             return new()
             {
-                StatusCode = StatusCodes.Status404NotFound,
-                Message = $"{_modelName} not found for update."
+                StatusCode = StatusCodes.Status200OK
             };
         }
 
         return new()
         {
-            StatusCode = StatusCodes.Status200OK,
-            Message = $"{_modelName} successfully updated."
+            StatusCode = StatusCodes.Status404NotFound,
+            Message = _defaultNotFoundMessage
         };
     }
 
-    public async Task<ApiResponseDto<object>> DeleteByIdAsync(Guid id)
+    public async Task<ApiResponseDto<object>> DeleteByIdAsync(Guid id, Guid contextUserId)
     {
-        bool result = await _repo.DeleteByIdAsync(id);
+        T? modelInDataBase = await _repo.GetByIdAsync(id);
 
-        if (!result)
+        if (modelInDataBase is not null)
         {
+            if (!UserHasPermission(modelInDataBase, contextUserId))
+            {
+                return new()
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
+            }
+
+            await _repo.DeleteByIdAsync(id);
+
             return new()
             {
-                StatusCode = StatusCodes.Status404NotFound,
-                Message = $"{_modelName} not found for to delete."
+                StatusCode = StatusCodes.Status200OK
             };
         }
 
         return new()
         {
-            StatusCode = StatusCodes.Status200OK,
-            Message = $"{_modelName} successfully deleted."
+            StatusCode = StatusCodes.Status404NotFound,
+            Message = _defaultNotFoundMessage
         };
+    }
+
+    private bool UserHasPermission(T modelInDataBase, Guid contextUserId)
+    {
+        Guid? userIdInDataBase = GetUserIdValueFromModel(modelInDataBase);
+
+        if (userIdInDataBase is not null && userIdInDataBase != contextUserId)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private Guid? GetUserIdValueFromModel(T model)
+    {
+        FieldInfo? userIdField = typeof(T).GetField(_userIdFieldName);
+
+        if (userIdField is not null)
+        {
+            return (Guid?)userIdField.GetValue(model);
+        }
+
+        return null;
+    }
+
+    private void SetUserIdValueToModel(T model, Guid userId)
+    {
+        FieldInfo? userIdField = typeof(T).GetField(_userIdFieldName);
+
+        if (userIdField is not null)
+        {
+            userIdField.SetValue(model, userId);
+        }
     }
 }
