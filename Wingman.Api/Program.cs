@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Reflection;
 using System.Text;
+using Wingman.Api.Core.DTOs;
 using Wingman.Api.Core.Middlewares;
 using Wingman.Api.Core.Services;
 using Wingman.Api.Core.Services.Interfaces;
@@ -27,12 +29,27 @@ builder.Services.AddControllers(config =>
 {
     AuthorizationPolicy policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     config.Filters.Add(new AuthorizeFilter(policy));
+}).ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        ApiResponseDto<object> response = new()
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Message = "One or more validation errors occurred.",
+            Errors = context.ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList()
+        };
+
+        return new BadRequestObjectResult(response);
+    };
 });
 
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
+
+builder.Services.AddFluentValidationAutoValidation();
 
 // NOTE(serafa.leo): This assumes all our validators are in the same assembly as Program.cs
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
@@ -84,12 +101,11 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
-app.UseMiddleware<ValidationMiddleware>();
 
 app.Run();
