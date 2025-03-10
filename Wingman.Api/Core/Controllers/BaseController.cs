@@ -7,7 +7,7 @@ namespace Wingman.Api.Core.Controllers;
 [Route("api/[controller]")]
 public abstract class BaseController : Controller
 {
-    protected IActionResult CreateResponse<R>(ApiResponseDto<R> response)
+    protected IActionResult CreateResponse<T>(ApiResponseDto<T> response)
     {
         return response.StatusCode switch
         {
