@@ -11,7 +11,7 @@ public abstract class CommonController<T>(IBaseService<T> service) : BaseControl
     [HttpGet]
     public async Task<IActionResult> GetAllAsync([FromQuery] int page, [FromQuery] int pageSize)
     {
-        return CreateResponse(await _service.GetAllAsync(HttpContext.GetUserId()!.Value, page, pageSize));
+        return CreateResponse(await _service.GetAllAsync(HttpContext.GetUserId(), page, pageSize));
     }
 
     [HttpGet("{id}")]
@@ -23,13 +23,13 @@ public abstract class CommonController<T>(IBaseService<T> service) : BaseControl
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] T model)
     {
-        return CreateResponse(await _service.CreateAsync(model, HttpContext.GetUserId()!.Value));
+        return CreateResponse(await _service.CreateAsync(model, HttpContext.GetUserId()));
     }
 
     [HttpPut]
     public async Task<IActionResult> UpdateAsync([FromBody] T model)
     {
-        return CreateResponse(await _service.UpdateAsync(model, HttpContext.GetUserId()!.Value));
+        return CreateResponse(await _service.UpdateAsync(model, HttpContext.GetUserId()));
     }
 
     [HttpDelete("{id}")]
