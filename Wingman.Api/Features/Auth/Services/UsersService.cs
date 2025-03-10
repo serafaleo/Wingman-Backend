@@ -2,7 +2,6 @@
 using Npgsql;
 using Wingman.Api.Core.DTOs;
 using Wingman.Api.Core.Helpers.ExtensionMethods;
-using Wingman.Api.Core.Services;
 using Wingman.Api.Features.Auth.DTOs;
 using Wingman.Api.Features.Auth.Helpers.Objects;
 using Wingman.Api.Features.Auth.Models;
@@ -11,7 +10,7 @@ using Wingman.Api.Features.Auth.Services.Interfaces;
 
 namespace Wingman.Api.Features.Auth.Services;
 
-public class UsersService(IUsersRepository repo, ITokenService tokenService) : BaseService<User>(repo), IUsersService
+public class UsersService(IUsersRepository repo, ITokenService tokenService) : IUsersService
 {
     private readonly IUsersRepository _repo = repo;
     private readonly ITokenService _tokenService = tokenService;

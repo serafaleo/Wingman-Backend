@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Wingman.Api.Core.DTOs;
-using Wingman.Api.Core.Services.Interfaces;
 
 namespace Wingman.Api.Core.Controllers;
 
-[Route("api/[controller]/[action]")]
-public abstract class BaseController<T>(IBaseService<T> service) : Controller
+[ApiController]
+[Route("api/[controller]")]
+public abstract class BaseController : Controller
 {
-    private readonly IBaseService<T> _service = service;
-
     protected IActionResult CreateResponse<R>(ApiResponseDto<R> response)
     {
         return response.StatusCode switch

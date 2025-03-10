@@ -31,11 +31,10 @@ public class ValidationMiddleware
             using (StreamReader reader = new StreamReader(context.Request.Body, Encoding.UTF8, leaveOpen: true))
             {
                 string body = await reader.ReadToEndAsync();
+                context.Request.Body.Position = 0;
 
                 if (body.IsNotNullOrEmpty())
                 {
-                    context.Request.Body.Position = 0;
-
                     Endpoint? endpoint = context.GetEndpoint();
 
                     if (endpoint is not null)

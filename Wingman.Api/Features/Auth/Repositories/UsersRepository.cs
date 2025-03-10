@@ -31,11 +31,10 @@ public class UsersRepository(IDbConnectionService db) : BaseRepository<User>(db)
         string userIdColumnName = BuildColumnName(nameof(User.Id));
         string userIdParamName = BuildParameterName(nameof(User.Id));
 
-        string query =
-$@"UPDATE {_tableName}
-   SET {refreshTokenColumnName} = {refreshTokenParamName},
-       {refreshTokenExpirationDateColumnName} = {refreshTokenExpirationDateParamName}
-   WHERE {userIdColumnName} = {userIdParamName}";
+        string query = $@"UPDATE {_tableName}
+                          SET {refreshTokenColumnName} = {refreshTokenParamName},
+                              {refreshTokenExpirationDateColumnName} = {refreshTokenExpirationDateParamName}
+                          WHERE {userIdColumnName} = {userIdParamName}";
 
         using IDbConnection connection = _db.CreateConnection();
         await connection.ExecuteAsync(query, user);
