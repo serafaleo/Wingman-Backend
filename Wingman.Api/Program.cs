@@ -84,12 +84,12 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
-app.UseMiddleware<ValidationMiddleware>();
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.UseMiddleware<ValidationMiddleware>();
 
 app.Run();
