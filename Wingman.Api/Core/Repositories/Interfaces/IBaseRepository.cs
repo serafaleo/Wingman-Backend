@@ -1,8 +1,9 @@
-﻿namespace Wingman.Api.Core.Repositories.Interfaces;
+﻿using Wingman.Api.Core.Models;
 
-public interface IBaseRepository<T>
+namespace Wingman.Api.Core.Repositories.Interfaces;
+
+public interface IBaseRepository<T> where T : BaseModel
 {
-    public Task<List<T>> GetAllAsync(Guid userId, int page, int pageSize);
     public Task<T?> GetByIdAsync(Guid id);
     public Task<Guid> CreateAsync(T model);
     public Task<bool> UpdateAsync(T model);

@@ -28,13 +28,11 @@ public class UsersRepository(IDbConnectionService db) : BaseRepository<User>(db)
         string refreshTokenParamName = BuildParameterName(nameof(User.RefreshToken));
         string refreshTokenExpirationDateColumnName = BuildColumnName(nameof(User.RefreshTokenExpirationDateTimeUTC));
         string refreshTokenExpirationDateParamName = BuildParameterName(nameof(User.RefreshTokenExpirationDateTimeUTC));
-        string userIdColumnName = BuildColumnName(nameof(User.Id));
-        string userIdParamName = BuildParameterName(nameof(User.Id));
 
         string query = $@"UPDATE {_tableName}
                           SET {refreshTokenColumnName} = {refreshTokenParamName},
                               {refreshTokenExpirationDateColumnName} = {refreshTokenExpirationDateParamName}
-                          WHERE {userIdColumnName} = {userIdParamName}";
+                          WHERE {_idColumnName} = {_idParamName}";
 
         using IDbConnection connection = _db.CreateConnection();
         await connection.ExecuteAsync(query, user);

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using LanguageExt;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Npgsql;
-using Wingman.Api.Core.DTOs;
 using Wingman.Api.Core.Helpers.ExtensionMethods;
+using Wingman.Api.Core.Services;
 using Wingman.Api.Features.Auth.DTOs;
 using Wingman.Api.Features.Auth.Helpers.Objects;
 using Wingman.Api.Features.Auth.Models;
@@ -10,12 +12,12 @@ using Wingman.Api.Features.Auth.Services.Interfaces;
 
 namespace Wingman.Api.Features.Auth.Services;
 
-public class UsersService(IUsersRepository repo, ITokenService tokenService) : IUsersService
+public class UsersService(IUsersRepository repo, ITokenService tokenService) : BaseService<User>, IUsersService
 {
     private readonly IUsersRepository _repo = repo;
     private readonly ITokenService _tokenService = tokenService;
 
-    public async Task<ApiResponseDto<object>> SignUp(SignUpRequestDto signUpDto)
+    public async Task<Either<ProblemDetails, Unit>> SignUp(SignUpRequestDto signUpDto)
     {
         User newUser = new()
         {
@@ -31,45 +33,32 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : I
         {
             await _repo.CreateAsync(newUser);
 
-            // TODO(serafa.leo): Send email to verify account
-
-            return new()
-            {
-                StatusCode = StatusCodes.Status201Created,
-                Message = "User successfully created."
-            };
+            return new Unit();
         }
         catch (PostgresException ex)
         {
             if (ex.SqlState == PostgresErrorCodes.UniqueViolation)
             {
-                return new()
-                {
-                    StatusCode = StatusCodes.Status409Conflict,
-                    Message = "Email address already used."
-                };
+                return new ProblemDetails().Conflict("Failed to create new user.", "Email address already used.");
             }
 
             throw;
         }
     }
 
-    public async Task<ApiResponseDto<TokenResponseDto>> Login(LoginRequestDto loginDto)
+    public async Task<Either<ProblemDetails, TokenResponseDto>> Login(LoginRequestDto loginDto)
     {
         // NOTE(serafa.leo): Here we avoid information disclosure by returning Unauthorized if anything
         // wrong occurs, and by providing a generic message like "Email or password is wrong".
 
-        ApiResponseDto<TokenResponseDto> commonFailedResponse = new()
-        {
-            StatusCode = StatusCodes.Status401Unauthorized,
-            Message = "Email or password wrong."
-        };
+        const string defaultErrorTitle = "Login failed";
+        const string defaultErrorMessage = "Email or password wrong.";
 
         User? user = await _repo.GetUserByEmailAsync(loginDto.Email);
 
         if (user is null)
         {
-            return commonFailedResponse;
+            return new ProblemDetails().Unauthorized(defaultErrorTitle, defaultErrorMessage);
         }
 
         PasswordVerificationResult passwordVerificationResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash!, loginDto.Password);
@@ -78,41 +67,28 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : I
 
         if (passwordVerificationResult == PasswordVerificationResult.Failed)
         {
-            return commonFailedResponse;
+            return new ProblemDetails().Unauthorized(defaultErrorTitle, defaultErrorMessage);
         }
 
-        TokenResponseDto tokenDto = await GenerateTokenDtoAndSaveAsync(user);
-
-        return new()
-        {
-            StatusCode = StatusCodes.Status200OK,
-            Data = tokenDto,
-            Message = "Login successful."
-        };
+        return await GenerateTokenDtoAndSaveAsync(user);
     }
 
-    public async Task<ApiResponseDto<TokenResponseDto>> Refresh(RefreshRequestDto refreshDto)
+    public async Task<Either<ProblemDetails, TokenResponseDto>> Refresh(RefreshRequestDto refreshDto)
     {
         // TODO(serafa.leo): Do we need to check if the JWT is still valid?
+
+        const string defaultErrorTitle = "Failed to refresh session.";
 
         User? user = await _repo.GetByIdAsync(refreshDto.UserId);
 
         if (user is null)
         {
-            return new()
-            {
-                StatusCode = StatusCodes.Status404NotFound,
-                Message = "User not found."
-            };
+            return new ProblemDetails().DefaultNotFound(defaultErrorTitle, _modelName);
         }
 
         if (user.RefreshToken.IsNullOrEmpty() || user.RefreshToken != refreshDto.RefreshToken)
         {
-            return new()
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Invalid Refresh Token."
-            };
+            return new ProblemDetails().BadRequest(defaultErrorTitle, "Invalid Refresh Token.");
         }
 
         if (user.RefreshTokenExpirationDateTimeUTC <= DateTime.UtcNow)
@@ -122,24 +98,13 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : I
 
             await _repo.UpdateRefreshTokenAsync(user);
 
-            return new()
-            {
-                StatusCode = StatusCodes.Status401Unauthorized,
-                Message = "Refresh Token is expired. A new login is necessary."
-            };
+            return new ProblemDetails().Unauthorized(defaultErrorTitle, "Refresh Token is expired. A new login is necessary.");
         }
 
-        TokenResponseDto tokenDto = await GenerateTokenDtoAndSaveAsync(user);
-
-        return new()
-        {
-            StatusCode = StatusCodes.Status200OK,
-            Data = tokenDto,
-            Message = "Refresh successful."
-        };
+        return await GenerateTokenDtoAndSaveAsync(user);
     }
 
-    public async Task<ApiResponseDto<object>> Logout(Guid userId, string userEmail)
+    public async Task<Either<ProblemDetails, Unit>> Logout(Guid userId, string userEmail)
     {
         User wildcardUser = new()
         {
@@ -149,11 +114,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : I
 
         await _repo.UpdateRefreshTokenAsync(wildcardUser);
 
-        return new()
-        {
-            StatusCode = StatusCodes.Status200OK,
-            Message = "Logout successful."
-        };
+        return new Unit();
     }
 
     private async Task<TokenResponseDto> GenerateTokenDtoAndSaveAsync(User user)

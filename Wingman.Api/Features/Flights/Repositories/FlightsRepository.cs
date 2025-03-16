@@ -5,6 +5,6 @@ using Wingman.Api.Features.Flights.Repositories.Interfaces;
 
 namespace Wingman.Api.Features.Flights.Repositories;
 
-public class FlightsRepository(IDbConnectionService db) : BaseRepository<Flight>(db), IFlightsRepository
+public class FlightsRepository(IDbConnectionService db) : CommonRepository<Flight>(db), IFlightsRepository
 {
 }

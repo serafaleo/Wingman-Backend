@@ -5,7 +5,6 @@ using Wingman.Api.Features.Flights.Services.Interfaces;
 
 namespace Wingman.Api.Features.Flights.Services;
 
-public class FlightsService(IFlightsRepository repo) : BaseService<Flight>(repo), IFlightsService
+public class FlightsService(IFlightsRepository repo) : CommonService<Flight>(repo), IFlightsService
 {
-    private readonly IFlightsRepository _repo = repo;
 }

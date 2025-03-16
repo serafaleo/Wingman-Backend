@@ -20,6 +20,7 @@ public class RefreshRequestDtoValidator : AbstractValidator<RefreshRequestDto>
 
         RuleFor(refreshDto => refreshDto.RefreshToken)
             .NotEmpty().WithMessage("Refresh Token not provided.")
-            .Length(LengthConstants.REFRESH_TOKEN_LENGTH).WithMessage($"Refresh Token must be {LengthConstants.REFRESH_TOKEN_LENGTH} characters long.");
+            .Length(LengthConstants.REFRESH_TOKEN_LENGTH)
+                .WithMessage($"Refresh Token must be {LengthConstants.REFRESH_TOKEN_LENGTH} characters long.");
     }
 }

@@ -2,39 +2,27 @@
 using System.Data;
 using System.Reflection;
 using System.Text;
+using Wingman.Api.Core.Models;
 using Wingman.Api.Core.Repositories.Interfaces;
 using Wingman.Api.Core.Services.Interfaces;
 
 namespace Wingman.Api.Core.Repositories;
 
-public abstract class BaseRepository<T> : IBaseRepository<T>
+public abstract class BaseRepository<T> : IBaseRepository<T> where T : BaseModel
 {
     protected readonly IDbConnectionService _db;
     protected readonly string _tableName;
+    protected readonly string _idColumnName;
+    protected readonly string _idParamName;
 
     public BaseRepository(IDbConnectionService db)
     {
+        T tempModel;
+
         _db = db;
         _tableName = $"\"{typeof(T).Name}s\"";
-    }
-
-    public async Task<List<T>> GetAllAsync(Guid userId, int page, int pageSize)
-    {
-        int offset = (page - 1) * pageSize;
-
-        var queryParams = new { UserId = userId, PageSize = pageSize, Offset = offset };
-
-        string userIdParamName = BuildParameterName(nameof(queryParams.UserId));
-        string pageSizeParamName = BuildParameterName(nameof(queryParams.PageSize));
-        string offsetParamName = BuildParameterName(nameof(queryParams.Offset));
-
-        string query = $@"SELECT * FROM {_tableName}
-                          LIMIT {pageSizeParamName}
-                          OFFSET {offsetParamName}
-                          WHERE ""UserId"" = {userIdParamName}";
-
-        using IDbConnection connection = _db.CreateConnection();
-        return (await connection.QueryAsync<T>(query, queryParams)).ToList();
+        _idColumnName = BuildColumnName(nameof(tempModel.Id));
+        _idParamName = BuildParameterName(nameof(tempModel.Id));
     }
 
     public async Task<T?> GetByIdAsync(Guid id)
@@ -43,7 +31,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         string idParamName = BuildParameterName(nameof(queryParams.Id));
 
-        string query = $"SELECT * FROM {_tableName} WHERE \"Id\" = {idParamName}";
+        string query = $"SELECT * FROM {_tableName} WHERE {_idColumnName} = {idParamName}";
 
         using IDbConnection connection = _db.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<T>(query, queryParams);
@@ -51,14 +39,14 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
     public async Task<Guid> CreateAsync(T model)
     {
-        IEnumerable<PropertyInfo> properties = GetModelPropertiesExceptPrimaryKey(model);
+        IEnumerable<PropertyInfo> properties = GetModelPropertiesExceptId(model);
 
         string columnNames = string.Join(", ", properties.Select(p => BuildColumnName(p.Name)));
         string parameterNames = string.Join(", ", properties.Select(p => BuildParameterName(p.Name)));
 
         string query = $@"INSERT INTO {_tableName} ({columnNames})
                           VALUES ({parameterNames})
-                          RETURNING ""Id"";";
+                          RETURNING {_idColumnName}";
 
         using IDbConnection connection = _db.CreateConnection();
         return await connection.ExecuteScalarAsync<Guid>(query, model);
@@ -66,7 +54,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
     public async Task<bool> UpdateAsync(T model)
     {
-        IEnumerable<PropertyInfo> properties = GetModelPropertiesExceptPrimaryKey(model);
+        IEnumerable<PropertyInfo> properties = GetModelPropertiesExceptId(model);
 
         StringBuilder setClause = new StringBuilder();
 
@@ -79,7 +67,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         string query = $@"UPDATE {_tableName}
                           SET {setClause}
-                          WHERE ""Id"" = @Id";
+                          WHERE {_idColumnName} = {_idParamName}";
 
         using IDbConnection connection = _db.CreateConnection();
 
@@ -93,7 +81,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
 
         string idParamName = BuildParameterName(nameof(queryParams.Id));
 
-        string query = $"DELETE FROM {_tableName} WHERE \"Id\" = {idParamName}";
+        string query = $"DELETE FROM {_tableName} WHERE {_idColumnName} = {idParamName}";
 
         IDbConnection connection = _db.CreateConnection();
 
@@ -111,9 +99,9 @@ public abstract class BaseRepository<T> : IBaseRepository<T>
         return $"@{fieldName}";
     }
 
-    private IEnumerable<PropertyInfo> GetModelPropertiesExceptPrimaryKey(T model)
+    private static IEnumerable<PropertyInfo> GetModelPropertiesExceptId(T model)
     {
         // NOTE(serafa.leo): Removing the Id property because we want the database to assign Id automatically.
-        return typeof(T).GetProperties().Where(p => p.Name != "Id");
+        return typeof(T).GetProperties().Where(p => p.Name != nameof(model.Id));
     }
 }

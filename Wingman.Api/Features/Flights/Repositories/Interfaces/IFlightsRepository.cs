@@ -3,6 +3,6 @@ using Wingman.Api.Features.Flights.Models;
 
 namespace Wingman.Api.Features.Flights.Repositories.Interfaces;
 
-public interface IFlightsRepository : IBaseRepository<Flight>
+public interface IFlightsRepository : ICommonRepository<Flight>
 {
 }

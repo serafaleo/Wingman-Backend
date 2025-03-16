@@ -1,4 +1,4 @@
-﻿using Wingman.Api.Core.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
 using Wingman.Api.Core.Helpers.ExtensionMethods;
 
 namespace Wingman.Api.Core.Middlewares;
@@ -22,22 +22,18 @@ public class GlobalExceptionHandlerMiddleware
         }
         catch (Exception ex)
         {
-            Exception inner = ex.GetInnermostException();
+            Exception innerException = ex.GetInnermostException();
 
-            _logger.LogError(ex, inner.Message); // TODO(serafa.leo): Learn about logging. Should I use ex or inner?
+            _logger.LogError(ex, innerException.Message); // TODO(serafa.leo): Learn about logging. Should I use ex or inner?
 
-            ApiResponseDto<object> response = new()
-            {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
 #if DEBUG
-            response.Message = inner.Message;
-            response.Errors = [inner.StackTrace];
+            ProblemDetails problem = new ProblemDetails().InternalServerError(innerException);
 #else
-            apiResponse.Message = "An unexpected error has occured.";
+            ProblemDetails problem = new ProblemDetails().InternalServerError();
 #endif
-            context.Response.StatusCode = response.StatusCode;
-            await context.Response.WriteAsJsonAsync(response);
+
+            context.Response.StatusCode = problem.Status!.Value;
+            await context.Response.WriteAsJsonAsync(problem);
         }
     }
 }

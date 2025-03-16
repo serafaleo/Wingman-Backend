@@ -8,17 +8,19 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Reflection;
 using System.Text;
-using Wingman.Api.Core.DTOs;
 using Wingman.Api.Core.Middlewares;
 using Wingman.Api.Core.Services;
 using Wingman.Api.Core.Services.Interfaces;
+using Wingman.Api.Features.Aircrafts.Repositories;
+using Wingman.Api.Features.Aircrafts.Repositories.Interfaces;
+using Wingman.Api.Features.Aircrafts.Services;
+using Wingman.Api.Features.Aircrafts.Services.Interfaces;
 using Wingman.Api.Features.Auth.Repositories;
 using Wingman.Api.Features.Auth.Repositories.Interfaces;
 using Wingman.Api.Features.Auth.Services;
 using Wingman.Api.Features.Auth.Services.Interfaces;
 using Wingman.Api.Features.Flights.Repositories;
 using Wingman.Api.Features.Flights.Repositories.Interfaces;
-using Wingman.Api.Features.Flights.Services;
 using Wingman.Api.Features.Flights.Services.Interfaces;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -29,19 +31,6 @@ builder.Services.AddControllers(config =>
 {
     AuthorizationPolicy policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     config.Filters.Add(new AuthorizeFilter(policy));
-}).ConfigureApiBehaviorOptions(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        ApiResponseDto<object> response = new()
-        {
-            StatusCode = StatusCodes.Status400BadRequest,
-            Message = "One or more validation errors occurred.",
-            Errors = context.ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage).ToList()
-        };
-
-        return new BadRequestObjectResult(response);
-    };
 });
 
 builder.Services.Configure<JsonOptions>(options =>
@@ -50,8 +39,6 @@ builder.Services.Configure<JsonOptions>(options =>
 });
 
 builder.Services.AddFluentValidationAutoValidation();
-
-// NOTE(serafa.leo): This assumes all our validators are in the same assembly as Program.cs
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -83,12 +70,13 @@ builder.Services.AddScoped<IUsersRepository, UsersRepository>(); // TODO(serafa.
 #endregion
 
 #region Flights
-builder.Services.AddScoped<IFlightsService, FlightsService>();
+builder.Services.AddScoped<IFlightsService, IFlightsService>();
 builder.Services.AddScoped<IFlightsRepository, FlightsRepository>();
 #endregion
 
 #region Aircrafts
-
+builder.Services.AddScoped<IAircraftsService, AircraftsService>();
+builder.Services.AddScoped<IAircraftsRepository, AircraftsRepository>();
 #endregion
 
 #endregion

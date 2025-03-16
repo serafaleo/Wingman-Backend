@@ -10,19 +10,22 @@
         <PackageReference Include="Dapper" Version="2.1.66" />
         <PackageReference Include="FluentValidation" Version="11.11.0" />
         <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+        <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Npgsql" Version="9.0.3" />
-        <PackageReference Include="Scalar.AspNetCore" Version="2.0.26" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.0.34" />
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Core\SQL\" />
-        <Folder Include="Features\Aircrafts\Controllers\" />
         <Folder Include="Features\Aircrafts\DTOs\" />
-        <Folder Include="Features\Aircrafts\Repositories\" />
-        <Folder Include="Features\Aircrafts\Services\" />
         <Folder Include="Features\Flights\DTOs\" />
+        <Folder Include="Migrations\" />
     </ItemGroup>
 
 </Project>

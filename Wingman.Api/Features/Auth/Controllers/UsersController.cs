@@ -15,26 +15,26 @@ public class UsersController(IUsersService service) : BaseController
     [HttpPost("[action]")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequestDto signUpDto)
     {
-        return CreateResponse(await _service.SignUp(signUpDto));
+        return (await _service.SignUp(signUpDto)).ToActionResult();
     }
 
     [AllowAnonymous]
     [HttpPost("[action]")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
     {
-        return CreateResponse(await _service.Login(loginDto));
+        return (await _service.Login(loginDto)).ToActionResult();
     }
 
     [AllowAnonymous]
     [HttpPost("[action]")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto refreshDto)
     {
-        return CreateResponse(await _service.Refresh(refreshDto));
+        return (await _service.Refresh(refreshDto)).ToActionResult();
     }
 
-    [HttpPut("[action]")]
+    [HttpPost("[action]")]
     public async Task<IActionResult> Logout()
     {
-        return CreateResponse(await _service.Logout(HttpContext.GetUserId(), HttpContext.GetUserEmail()));
+        return (await _service.Logout(HttpContext.GetUserId(), HttpContext.GetUserEmail())).ToActionResult();
     }
 }

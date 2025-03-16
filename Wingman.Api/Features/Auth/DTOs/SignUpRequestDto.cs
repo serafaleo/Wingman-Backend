@@ -20,6 +20,7 @@ public class SignUpRequestDtoValidator : AbstractValidator<SignUpRequestDto>
         RuleFor(signUpDto => signUpDto.Password).PasswordRules();
 
         RuleFor(signUpDto => signUpDto.PasswordConfirmation)
-            .Equal(signUpDto => signUpDto.Password).WithMessage("Password and confirmation password do not match.");
+            .Equal(signUpDto => signUpDto.Password)
+                .WithMessage("Password and confirmation password do not match.");
     }
 }

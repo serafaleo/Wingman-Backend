@@ -6,5 +6,4 @@ namespace Wingman.Api.Features.Flights.Controllers;
 
 public class FlightsController(IFlightsService service) : CommonController<Flight>(service)
 {
-    private readonly IFlightsService _service = service;
 }
