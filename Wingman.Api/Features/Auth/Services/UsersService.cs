@@ -83,7 +83,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
         if (user is null)
         {
-            return new ProblemDetails().DefaultNotFound(defaultErrorTitle, _modelName);
+            return new ProblemDetails().DefaultNotFound(defaultErrorTitle, modelName);
         }
 
         if (user.RefreshToken.IsNullOrEmpty() || user.RefreshToken != refreshDto.RefreshToken)

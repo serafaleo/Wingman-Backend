@@ -11,7 +11,7 @@ using Wingman.Api.Features.Auth.Repositories.Interfaces;
 using Wingman.Api.Features.Auth.Services;
 using Wingman.Api.Features.Auth.Services.Interfaces;
 
-namespace Wingman.Tests.Unit;
+namespace Wingman.Tests.Unit.Features;
 
 public class UsersServiceTests
 {

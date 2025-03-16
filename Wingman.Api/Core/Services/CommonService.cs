@@ -15,7 +15,7 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
     {
         if (page < 1 || pageSize < 1)
         {
-            return new ProblemDetails().BadRequest($"Failed to get {_modelName}s.", "Invalid pagination parameters.");
+            return new ProblemDetails().BadRequest($"Failed to get {modelName}s.", "Invalid pagination parameters.");
         }
 
         return await _repo.GetAllAsync(contextUserId, page, pageSize);
@@ -86,12 +86,12 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
 
         if (modelInDataBase is null)
         {
-            return new ProblemDetails().DefaultNotFound(defaultErrorTitle, _modelName);
+            return new ProblemDetails().DefaultNotFound(defaultErrorTitle, modelName);
         }
 
         if (!UserHasPermission(modelInDataBase, contextUserId))
         {
-            return new ProblemDetails().DefaultForbidden(defaultErrorTitle, _modelName);
+            return new ProblemDetails().DefaultForbidden(defaultErrorTitle, modelName);
         }
 
         return modelInDataBase;
@@ -109,6 +109,6 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
 
     private string BuildDefaultErrorTitle(Guid id, string action)
     {
-        return $"Failed to {action} {_modelName} ID {id}.";
+        return $"Failed to {action} {modelName} ID {id}.";
     }
 }
