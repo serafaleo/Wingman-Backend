@@ -51,7 +51,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
         // NOTE(serafa.leo): Here we avoid information disclosure by returning Unauthorized if anything
         // wrong occurs, and by providing a generic message like "Email or password is wrong".
 
-        const string defaultErrorTitle = "Login failed";
+        const string defaultErrorTitle = "Login failed.";
         const string defaultErrorMessage = "Email or password wrong.";
 
         User? user = await _repo.GetUserByEmailAsync(loginDto.Email);

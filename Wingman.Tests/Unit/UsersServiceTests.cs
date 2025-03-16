@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using LanguageExt;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Npgsql;
-using Wingman.Api.Core.DTOs;
 using Wingman.Api.Features.Auth.DTOs;
 using Wingman.Api.Features.Auth.Helpers.Objects;
 using Wingman.Api.Features.Auth.Models;
@@ -27,7 +28,7 @@ public class UsersServiceTests
 
     #region SignUp
     [Fact]
-    public async Task SignUp_ShouldReturnCreated_WhenSuccessful()
+    public async Task SignUp_ShouldReturnUnit_WhenSuccessful()
     {
         // Arrange
         SignUpRequestDto signUpDto = new()
@@ -40,14 +41,10 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.CreateAsync(It.IsAny<User>())).ReturnsAsync(Guid.NewGuid());
 
         // Act
-        ApiResponseDto<object> result = await _service.SignUp(signUpDto);
+        Either<ProblemDetails, LanguageExt.Unit> result = await _service.SignUp(signUpDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status201Created, result.StatusCode);
-        Assert.True(result.Success);
-        Assert.Equal("User successfully created.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsRight);
     }
 
     [Fact]
@@ -65,20 +62,19 @@ public class UsersServiceTests
             .Throws(new PostgresException(string.Empty, string.Empty, string.Empty, PostgresErrorCodes.UniqueViolation));
 
         // Act
-        ApiResponseDto<object> result = await _service.SignUp(signUpDto);
+        Either<ProblemDetails, LanguageExt.Unit> result = await _service.SignUp(signUpDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status409Conflict, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Email address already used.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status409Conflict, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to create new user.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Email address already used.", result.LeftAsEnumerable().First().Detail);
     }
     #endregion
 
     #region Login
     [Fact]
-    public async Task Login_ShouldReturnOkAndToken_WhenSuccessful()
+    public async Task Login_ShouldReturnToken_WhenSuccessful()
     {
         // Arrange
         LoginRequestDto loginDto = new()
@@ -103,17 +99,13 @@ public class UsersServiceTests
         _mockTokenService.Setup(ts => ts.GenerateRefreshToken()).Returns(new RefreshToken() { Token = refreshToken, Expiration = DateTime.UtcNow.AddDays(7) });
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Login(loginDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Login(loginDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.True(result.Success);
-        Assert.Equal("Login successful.", result.Message);
-        Assert.NotNull(result.Data);
-        Assert.Equal(user.Id, result.Data.UserId);
-        Assert.Equal(refreshToken, result.Data.RefreshToken);
-        Assert.Equal(accessToken, result.Data.AccessToken);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsRight);
+        Assert.Equal(user.Id, result.RightAsEnumerable().First().UserId);
+        Assert.Equal(refreshToken, result.RightAsEnumerable().First().RefreshToken);
+        Assert.Equal(accessToken, result.RightAsEnumerable().First().AccessToken);
     }
 
     [Fact]
@@ -129,14 +121,13 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetUserByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Login(loginDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Login(loginDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status401Unauthorized, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Email or password wrong.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status401Unauthorized, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Login failed.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Email or password wrong.", result.LeftAsEnumerable().First().Detail);
     }
 
     [Fact]
@@ -160,14 +151,13 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetUserByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Login(loginDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Login(loginDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status401Unauthorized, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Email or password wrong.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status401Unauthorized, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Login failed.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Email or password wrong.", result.LeftAsEnumerable().First().Detail);
     }
 
     #endregion
@@ -186,18 +176,17 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetByIdAsync(refreshDto.UserId)).ReturnsAsync((User?)null);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Refresh(refreshDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Refresh(refreshDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status404NotFound, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("User not found.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status404NotFound, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to refresh session.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("The requested User was not found in the server.", result.LeftAsEnumerable().First().Detail);
     }
 
     [Fact]
-    public async Task Refresh_ShouldReturnBadRequest_WhenRefreshTokenInDatabaseIsNull()
+    public async Task Refresh_ShouldReturnBadRequest_WhenRefreshTokenInDataBaseIsNull()
     {
         // Arrange
         RefreshRequestDto refreshDto = new()
@@ -218,14 +207,13 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetByIdAsync(refreshDto.UserId)).ReturnsAsync(user);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Refresh(refreshDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Refresh(refreshDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Invalid Refresh Token.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to refresh session.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Invalid Refresh Token.", result.LeftAsEnumerable().First().Detail);
     }
 
     [Fact]
@@ -250,14 +238,13 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetByIdAsync(refreshDto.UserId)).ReturnsAsync(user);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Refresh(refreshDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Refresh(refreshDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Invalid Refresh Token.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to refresh session.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Invalid Refresh Token.", result.LeftAsEnumerable().First().Detail);
     }
 
     [Fact]
@@ -282,18 +269,17 @@ public class UsersServiceTests
         _mockRepo.Setup(repo => repo.GetByIdAsync(refreshDto.UserId)).ReturnsAsync(user);
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Refresh(refreshDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Refresh(refreshDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status401Unauthorized, result.StatusCode);
-        Assert.False(result.Success);
-        Assert.Equal("Refresh Token is expired. A new login is necessary.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status401Unauthorized, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to refresh session.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("Refresh Token is expired. A new login is necessary.", result.LeftAsEnumerable().First().Detail);
     }
 
     [Fact]
-    public async Task Refresh_ShouldReturnOkAndNewToken_WhenSuccessful()
+    public async Task Refresh_ShouldReturnNewToken_WhenSuccessful()
     {
         // Arrange
         RefreshRequestDto refreshDto = new()
@@ -319,38 +305,30 @@ public class UsersServiceTests
         _mockTokenService.Setup(ts => ts.GenerateRefreshToken()).Returns(new RefreshToken() { Token = refreshToken, Expiration = DateTime.UtcNow.AddDays(7) });
 
         // Act
-        ApiResponseDto<TokenResponseDto> result = await _service.Refresh(refreshDto);
+        Either<ProblemDetails, TokenResponseDto> result = await _service.Refresh(refreshDto);
 
         // Assert
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.True(result.Success);
-        Assert.Equal("Refresh successful.", result.Message);
-        Assert.NotNull(result.Data);
-        Assert.Equal(user.Id, result.Data.UserId);
-        Assert.Equal(refreshToken, result.Data.RefreshToken);
-        Assert.Equal(accessToken, result.Data.AccessToken);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsRight);
+        Assert.Equal(user.Id, result.RightAsEnumerable().First().UserId);
+        Assert.Equal(refreshToken, result.RightAsEnumerable().First().RefreshToken);
+        Assert.Equal(accessToken, result.RightAsEnumerable().First().AccessToken);
     }
 
     #endregion
 
     #region Logout
     [Fact]
-    public async Task Logout_ShouldReturnOk_WhenSuccessful()
+    public async Task Logout_ShouldReturnUnit_WhenSuccessful()
     {
         // Arrange
         Guid userId = Guid.NewGuid();
         string email = "test@test.com";
 
         // Act
-        ApiResponseDto<object> result = await _service.Logout(userId, email);
+        Either<ProblemDetails, LanguageExt.Unit> result = await _service.Logout(userId, email);
 
         // Assert
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.True(result.Success);
-        Assert.Equal("Logout successful.", result.Message);
-        Assert.Null(result.Data);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsRight);
     }
     #endregion
 }
