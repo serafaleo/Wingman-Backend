@@ -15,7 +15,7 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
     {
         if (page < 1 || pageSize < 1)
         {
-            return new ProblemDetails().BadRequest($"Failed to get {_modelName}s", "Invalid pagination parameters.");
+            return new ProblemDetails().BadRequest($"Failed to get {_modelName}s.", "Invalid pagination parameters.");
         }
 
         return await _repo.GetAllAsync(contextUserId, page, pageSize);
@@ -33,10 +33,11 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
         return validation.RightAsEnumerable().First();
     }
 
-    public async Task<Either<ProblemDetails, Guid>> CreateAsync(T model, Guid contextUserId)
+    public async Task<Either<ProblemDetails, Unit>> CreateAsync(T model, Guid contextUserId)
     {
         model.UserId = contextUserId;
-        return await _repo.CreateAsync(model);
+        model.Id = await _repo.CreateAsync(model);
+        return new Unit();
     }
 
     public async Task<Either<ProblemDetails, Unit>> UpdateAsync(Guid id, T model, Guid contextUserId)
@@ -60,6 +61,7 @@ public abstract class CommonService<T>(ICommonRepository<T> repo) : BaseService<
             return new ProblemDetails().BadRequest(BuildDefaultErrorTitle(id, action), "Body object UserID was changed, which is not permitted.");
         }
 
+        model.UserId = contextUserId;
         await _repo.UpdateAsync(model);
         return new Unit();
     }

@@ -27,6 +27,7 @@ public class UsersServiceTests
     }
 
     #region SignUp
+
     [Fact]
     public async Task SignUp_ShouldReturnUnit_WhenSuccessful()
     {
@@ -70,9 +71,11 @@ public class UsersServiceTests
         Assert.Equal("Failed to create new user.", result.LeftAsEnumerable().First().Title);
         Assert.Equal("Email address already used.", result.LeftAsEnumerable().First().Detail);
     }
+
     #endregion
 
     #region Login
+
     [Fact]
     public async Task Login_ShouldReturnToken_WhenSuccessful()
     {
@@ -163,6 +166,7 @@ public class UsersServiceTests
     #endregion
 
     #region Refresh
+
     [Fact]
     public async Task Refresh_ShouldReturnNotFound_WhenUserDoesNotExists()
     {
@@ -317,6 +321,7 @@ public class UsersServiceTests
     #endregion
 
     #region Logout
+
     [Fact]
     public async Task Logout_ShouldReturnUnit_WhenSuccessful()
     {
@@ -330,5 +335,6 @@ public class UsersServiceTests
         // Assert
         Assert.True(result.IsRight);
     }
+
     #endregion
 }
