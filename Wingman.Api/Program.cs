@@ -21,6 +21,7 @@ using Wingman.Api.Features.Auth.Services;
 using Wingman.Api.Features.Auth.Services.Interfaces;
 using Wingman.Api.Features.Flights.Repositories;
 using Wingman.Api.Features.Flights.Repositories.Interfaces;
+using Wingman.Api.Features.Flights.Services;
 using Wingman.Api.Features.Flights.Services.Interfaces;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -70,7 +71,7 @@ builder.Services.AddScoped<IUsersRepository, UsersRepository>(); // TODO(serafa.
 #endregion
 
 #region Flights
-builder.Services.AddScoped<IFlightsService, IFlightsService>();
+builder.Services.AddScoped<IFlightsService, FlightsService>();
 builder.Services.AddScoped<IFlightsRepository, FlightsRepository>();
 #endregion
 
@@ -83,7 +84,7 @@ builder.Services.AddScoped<IAircraftsRepository, AircraftsRepository>();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if(app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
