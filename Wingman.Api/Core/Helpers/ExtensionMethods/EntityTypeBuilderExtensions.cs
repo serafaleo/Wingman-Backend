@@ -11,6 +11,7 @@ public static class EntityTypeBuilderExtensions
     public static void BaseConfiguration<T>(this EntityTypeBuilder<T> builder) where T : BaseModel
     {
         builder.HasKey(model => model.Id);
+        builder.Property(model => model.Id).HasDefaultValueSql("gen_random_uuid()");
     }
 
     public static void CommonConfiguration<T>(this EntityTypeBuilder<T> builder) where T : CommonModel
@@ -27,7 +28,7 @@ public static class EntityTypeBuilderExtensions
                                                                           Expression<Func<T, TEnum>> propertyExpression)
         where TEnum : Enum where T : CommonModel
     {
-        if (propertyExpression.Body is not MemberExpression memberExpression)
+        if(propertyExpression.Body is not MemberExpression memberExpression)
         {
             throw new ArgumentException("Expression must be a property access expression", nameof(propertyExpression));
         }
