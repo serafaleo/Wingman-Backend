@@ -110,6 +110,7 @@ public class UsersServiceTests
         // Assert
         Assert.True(result.IsRight);
         Assert.Equal(user.Id, result.RightAsEnumerable().First().UserId);
+        Assert.Equal(user.Name, result.RightAsEnumerable().First().UserName);
         Assert.Equal(refreshToken, result.RightAsEnumerable().First().RefreshToken);
         Assert.Equal(accessToken, result.RightAsEnumerable().First().AccessToken);
     }
@@ -321,6 +322,7 @@ public class UsersServiceTests
 
         // Assert
         Assert.True(result.IsRight);
+        Assert.Equal(user.Name, result.RightAsEnumerable().First().UserName);
         Assert.Equal(user.Id, result.RightAsEnumerable().First().UserId);
         Assert.Equal(refreshToken, result.RightAsEnumerable().First().RefreshToken);
         Assert.Equal(accessToken, result.RightAsEnumerable().First().AccessToken);
