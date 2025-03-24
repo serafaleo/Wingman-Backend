@@ -8,9 +8,4 @@ public static class HttpContextExtensions
     {
         return Guid.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     }
-
-    public static string GetUserEmail(this HttpContext context)
-    {
-        return context.User.FindFirstValue(ClaimTypes.Email)!;
-    }
 }

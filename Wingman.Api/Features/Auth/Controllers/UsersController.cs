@@ -35,6 +35,6 @@ public class UsersController(IUsersService service) : BaseController
     [HttpPost("[action]")]
     public async Task<IActionResult> Logout()
     {
-        return (await _service.Logout(HttpContext.GetUserId(), HttpContext.GetUserEmail())).ToActionResult();
+        return (await _service.Logout(HttpContext.GetUserId())).ToActionResult();
     }
 }

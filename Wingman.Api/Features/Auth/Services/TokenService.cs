@@ -15,8 +15,7 @@ public class TokenService(IConfiguration configuration) : ITokenService
 
     public string GenerateAccessToken(User user)
     {
-        List<Claim> claims = [new Claim(ClaimTypes.Email, user.Email!),
-                              new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())];
+        List<Claim> claims = [new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())];
 
         SymmetricSecurityKey secretKey = new(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         SigningCredentials signinCredentials = new(secretKey, SecurityAlgorithms.HmacSha512);
@@ -35,7 +34,7 @@ public class TokenService(IConfiguration configuration) : ITokenService
     public RefreshToken GenerateRefreshToken()
     {
         byte[] randomNumber = new byte[32];
-        using (RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create())
+        using(RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create())
         {
             randomNumberGenerator.GetBytes(randomNumber);
 

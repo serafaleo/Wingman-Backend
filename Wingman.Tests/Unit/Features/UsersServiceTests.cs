@@ -34,6 +34,7 @@ public class UsersServiceTests
         // Arrange
         SignUpRequestDto signUpDto = new()
         {
+            Name = "Test Name",
             Email = "test@test.com",
             Password = "Password_123",
             PasswordConfirmation = "Password_123"
@@ -54,6 +55,7 @@ public class UsersServiceTests
         // Arrange
         SignUpRequestDto signUpDto = new()
         {
+            Name = "Test Name",
             Email = "test@test.com",
             Password = "Password_123",
             PasswordConfirmation = "Password_123"
@@ -89,6 +91,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = Guid.NewGuid(),
+            Name = "Test Name",
             Email = loginDto.Email
         };
 
@@ -146,6 +149,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = Guid.NewGuid(),
+            Name = "Test Name",
             Email = loginDto.Email
         };
 
@@ -202,6 +206,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = refreshDto.UserId,
+            Name = "Test Name",
             Email = "test@test.com",
             PasswordHash = "Some Hash",
             RefreshToken = null,
@@ -233,6 +238,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = refreshDto.UserId,
+            Name = "Test Name",
             Email = "test@test.com",
             PasswordHash = "Some Hash",
             RefreshToken = "Right Refresh Token",
@@ -264,6 +270,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = refreshDto.UserId,
+            Name = "Test Name",
             Email = "test@test.com",
             PasswordHash = "Some Hash",
             RefreshToken = refreshDto.RefreshToken,
@@ -295,6 +302,7 @@ public class UsersServiceTests
         User user = new()
         {
             Id = refreshDto.UserId,
+            Name = "Test Name",
             Email = "test@test.com",
             PasswordHash = "Some Hash",
             RefreshToken = refreshDto.RefreshToken,
@@ -327,13 +335,38 @@ public class UsersServiceTests
     {
         // Arrange
         Guid userId = Guid.NewGuid();
-        string email = "test@test.com";
+
+        User existingUser = new()
+        {
+            Name = "Test Name",
+            Email = "test@test.com"
+        };
+
+        _mockRepo.Setup(repo => repo.GetByIdAsync(userId)).ReturnsAsync(existingUser);
 
         // Act
-        Either<ProblemDetails, LanguageExt.Unit> result = await _service.Logout(userId, email);
+        Either<ProblemDetails, LanguageExt.Unit> result = await _service.Logout(userId);
 
         // Assert
         Assert.True(result.IsRight);
+    }
+
+    [Fact]
+    public async Task Logout_ShouldReturnNotFound_WhenUserDoesNotExists()
+    {
+        // Arrange
+        Guid userId = Guid.NewGuid();
+
+        _mockRepo.Setup(repo => repo.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+
+        // Act
+        Either<ProblemDetails, LanguageExt.Unit> result = await _service.Logout(userId);
+
+        // Assert
+        Assert.True(result.IsLeft);
+        Assert.Equal(StatusCodes.Status404NotFound, result.LeftAsEnumerable().First().Status);
+        Assert.Equal("Failed to logout.", result.LeftAsEnumerable().First().Title);
+        Assert.Equal("The requested User was not found in the server.", result.LeftAsEnumerable().First().Detail);
     }
 
     #endregion

@@ -21,6 +21,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
     {
         User newUser = new()
         {
+            Name = signUpDto.Name,
             Email = signUpDto.Email
         };
 
@@ -35,9 +36,9 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
             return new Unit();
         }
-        catch (PostgresException ex)
+        catch(PostgresException ex)
         {
-            if (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+            if(ex.SqlState == PostgresErrorCodes.UniqueViolation)
             {
                 return new ProblemDetails().Conflict("Failed to create new user.", "Email address already used.");
             }
@@ -56,7 +57,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
         User? user = await _repo.GetUserByEmailAsync(loginDto.Email);
 
-        if (user is null)
+        if(user is null)
         {
             return new ProblemDetails().Unauthorized(defaultErrorTitle, defaultErrorMessage);
         }
@@ -65,7 +66,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
         loginDto.Password = string.Empty;
 
-        if (passwordVerificationResult == PasswordVerificationResult.Failed)
+        if(passwordVerificationResult == PasswordVerificationResult.Failed)
         {
             return new ProblemDetails().Unauthorized(defaultErrorTitle, defaultErrorMessage);
         }
@@ -81,17 +82,17 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
         User? user = await _repo.GetByIdAsync(refreshDto.UserId);
 
-        if (user is null)
+        if(user is null)
         {
             return new ProblemDetails().DefaultNotFound(defaultErrorTitle, modelName);
         }
 
-        if (user.RefreshToken.IsNullOrEmpty() || user.RefreshToken != refreshDto.RefreshToken)
+        if(user.RefreshToken.IsNullOrEmpty() || user.RefreshToken != refreshDto.RefreshToken)
         {
             return new ProblemDetails().BadRequest(defaultErrorTitle, "Invalid Refresh Token.");
         }
 
-        if (user.RefreshTokenExpirationDateTimeUTC <= DateTime.UtcNow)
+        if(user.RefreshTokenExpirationDateTimeUTC <= DateTime.UtcNow)
         {
             user.RefreshToken = null;
             user.RefreshTokenExpirationDateTimeUTC = null;
@@ -104,15 +105,19 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
         return await GenerateTokenDtoAndSaveAsync(user);
     }
 
-    public async Task<Either<ProblemDetails, Unit>> Logout(Guid userId, string userEmail)
+    public async Task<Either<ProblemDetails, Unit>> Logout(Guid userId)
     {
-        User wildcardUser = new()
-        {
-            Id = userId,
-            Email = userEmail
-        };
+        User? user = await _repo.GetByIdAsync(userId);
 
-        await _repo.UpdateRefreshTokenAsync(wildcardUser);
+        if(user is null)
+        {
+            return new ProblemDetails().DefaultNotFound("Failed to logout.", modelName);
+        }
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpirationDateTimeUTC = null;
+
+        await _repo.UpdateRefreshTokenAsync(user);
 
         return new Unit();
     }
@@ -129,6 +134,7 @@ public class UsersService(IUsersRepository repo, ITokenService tokenService) : B
 
         return new TokenResponseDto()
         {
+            UserName = user.Name!,
             UserId = user.Id,
             AccessToken = accessToken,
             RefreshToken = refreshToken.Token

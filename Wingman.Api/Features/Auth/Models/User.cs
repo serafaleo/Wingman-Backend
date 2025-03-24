@@ -8,6 +8,7 @@ namespace Wingman.Api.Features.Auth.Models;
 
 public class User : BaseModel
 {
+    public required string Name { get; set; }
     public required string Email { get; set; }
     public string? PasswordHash { get; set; }
     public string? RefreshToken { get; set; }
@@ -19,6 +20,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.BaseConfiguration();
+
+        builder.Property(user => user.Name)
+            .HasMaxLength(LengthConstants.USER_NAME_MAX_LENGTH)
+            .IsRequired();
 
         builder.HasIndex(user => user.Email).IsUnique();
 
